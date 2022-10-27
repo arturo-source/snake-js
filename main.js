@@ -13,7 +13,6 @@ canvas.height = GAME_HEIGHT;
 var snake = {
     body: [
         {x: 400, y: 400},
-        {x: 380, y: 400},
     ],
     lastMove: 'right',
 };
@@ -28,13 +27,17 @@ var food = {
 var game = {
     score: 0,
     speed: 100,
-    isOver: false,
 };
 
 // Draw snake
 function drawSnake() {
-    ctx.fillStyle = 'green';
-    snake.body.forEach(function (part) {
+    // Draw head
+    ctx.fillStyle = '#3a5a40';
+    ctx.fillRect(snake.body[0].x, snake.body[0].y, SQUARE_SIZE, SQUARE_SIZE);
+
+    // Draw body
+    ctx.fillStyle = '#a3b18a';
+    snake.body.slice(1).forEach(function (part) {
         ctx.fillRect(part.x, part.y, SQUARE_SIZE, SQUARE_SIZE);
     });
 }
@@ -65,9 +68,6 @@ function drawGame() {
     drawSnake();
     drawFood();
     drawScore();
-    if (game.isOver) {
-        drawGameOver();
-    }
 }
 
 // Move snake
@@ -155,7 +155,6 @@ function handleKeyDown(e) {
 // Main game loop
 function main() {
     if (isGameOver()) {
-        game.isOver = true;
         drawGameOver();
         return;
     }
