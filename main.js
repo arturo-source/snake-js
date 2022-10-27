@@ -14,7 +14,7 @@ var snake = {
     body: [
         {x: 400, y: 400},
     ],
-    lastMove: 'right',
+    nextMove: 'right',
 };
 
 // Food
@@ -77,7 +77,7 @@ function moveSnake() {
         x: head.x,
         y: head.y,
     };
-    switch (snake.lastMove) {
+    switch (snake.nextMove) {
         case 'right':
             newHead.x += SQUARE_SIZE;
             break;
@@ -130,23 +130,23 @@ function generateFood() {
 function handleKeyDown(e) {
     switch (e.key) {
         case 'ArrowLeft':
-            if (snake.lastMove !== 'right') {
-                snake.lastMove = 'left';
+            if (snake.nextMove !== 'right') {
+                snake.nextMove = 'left';
             }
             break;
         case 'ArrowUp':
-            if (snake.lastMove !== 'down') {
-                snake.lastMove = 'up';
+            if (snake.nextMove !== 'down') {
+                snake.nextMove = 'up';
             }
             break;
         case 'ArrowRight':
-            if (snake.lastMove !== 'left') {
-                snake.lastMove = 'right';
+            if (snake.nextMove !== 'left') {
+                snake.nextMove = 'right';
             }
             break;
         case 'ArrowDown':
-            if (snake.lastMove !== 'up') {
-                snake.lastMove = 'down';
+            if (snake.nextMove !== 'up') {
+                snake.nextMove = 'down';
             }
             break;
     }
