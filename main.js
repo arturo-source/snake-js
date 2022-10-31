@@ -1,6 +1,10 @@
 const SQUARE_SIZE = 20;
-const GAME_WIDTH = 800;
-const GAME_HEIGHT = 800;
+const GAME_WIDTH = 400;
+const GAME_HEIGHT = 400;
+const AVAILABLE_STATES = {
+    training: 0,
+    trained: 1,
+}
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -12,7 +16,7 @@ canvas.height = GAME_HEIGHT;
 // Snake game
 var snake = {
     body: [
-        {x: 400, y: 400},
+        { x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2 },
     ],
     nextMove: 'right',
 };
@@ -72,8 +76,11 @@ function drawGame() {
 
 // Move snake
 function moveSnake() {
-    var head = snake.body[0];
-    var newHead = {
+    if (gameState === AVAILABLE_STATES.trained)
+        snake.nextMove = snake.Run();
+
+    let head = snake.body[0];
+    let newHead = {
         x: head.x,
         y: head.y,
     };
@@ -97,19 +104,19 @@ function moveSnake() {
 
 // Check if snake is out of game
 function isSnakeOutOfGame() {
-    var head = snake.body[0];
+    let head = snake.body[0];
     return head.x < 0 || head.x >= GAME_WIDTH || head.y < 0 || head.y >= GAME_HEIGHT;
 }
 
 // Check if snake is eating food
 function isSnakeEatingFood() {
-    var head = snake.body[0];
+    let head = snake.body[0];
     return head.x === food.x && head.y === food.y;
 }
 
 // Check if snake is eating itself
 function isSnakeEatingItself() {
-    var head = snake.body[0];
+    let head = snake.body[0];
     return snake.body.slice(1).some(function (part) {
         return part.x === head.x && part.y === head.y;
     });
@@ -154,6 +161,9 @@ function handleKeyDown(e) {
 
 // Main game loop
 function main() {
+    if (gameState === AVAILABLE_STATES.training)
+        humanTrainSteps.push(CurrentTrainState());
+
     if (isGameOver()) {
         drawGameOver();
         return;
@@ -171,10 +181,35 @@ function main() {
 
 // Start game
 function startGame() {
+    snake.body = [
+        { x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2 },
+    ];
+    gameState = AVAILABLE_STATES.training;
+    humanTrainSteps = [];
+
     generateFood();
     main();
 }
 
+function train() {
+    console.log('Training...');
+    snake.Train(humanTrainSteps);
+    console.log('Training completed');
+    gameState = AVAILABLE_STATES.trained;
+}
+
+function defaultTrain() {
+    console.log('Training...');
+    snake.Train(DefaultTrain());
+    console.log('Training completed');
+    gameState = AVAILABLE_STATES.trained;
+}
+
+let humanTrainSteps = [];
+let gameState = AVAILABLE_STATES.training;
+
 // Add event listener
 document.addEventListener('keydown', handleKeyDown);
-startGame();
+document.getElementById('start').addEventListener('click', startGame);
+document.getElementById('train').addEventListener('click', train);
+document.getElementById('defaultTrain').addEventListener('click', defaultTrain);

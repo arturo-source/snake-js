@@ -7,10 +7,15 @@
 </head>
 
 <body>
-    <div style="border: 1px solid black; width: 800px; height: 800px;">
-        <canvas id="game"></canvas>
+    <button id="start">Play (train AI to play like you)</button>
+    <button id="train">Train (use your training data)</button>
+    <button id="defaultTrain">Default train</button>
+    <div>
+        <canvas id="game" style="border: 1px solid black;"></canvas>
     </div>
+    <script src="https://unpkg.com/brain.js"></script>
     <script src="main.js"></script>
+    <script src="ai.js"></script>
 </body>
 
 </html>
