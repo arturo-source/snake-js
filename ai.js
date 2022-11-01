@@ -11,7 +11,11 @@ const AVAILABLE_STATES = {
     snake: 2,
 }
 
-var nn = new brain.NeuralNetwork();
+const MOVES_MAX = Math.max(...Object.keys(AVAILABLE_MOVES).map((k, v) => v));
+const STATES_MAX = Math.max(...Object.keys(AVAILABLE_STATES).map((k, v) => v));
+
+var nn = new brain.NeuralNetwork({ hiddenLayers: [] });
+const nnIsTrained = () => nn.outputLayer !== -1;
 
 function DefaultTrain() {
     const TOTAL_CELL_COUNT = (GAME_WIDTH / SQUARE_SIZE) * (GAME_HEIGHT / SQUARE_SIZE);
@@ -74,8 +78,17 @@ function CurrentTrainState() {
 
 
 snake.Train = (steps) => {
+    // Normalize the data
+    steps = steps.map(step => {
+        step.input = step.input.map(cell => cell / STATES_MAX);
+        step.output.move /= MOVES_MAX;
+        return step;
+    });
+
     nn.train(steps, {
-        log: (err) => console.log({ err }),
+        // iterations: 1000,
+        // errorThresh: 0.01,
+        log: err => console.log(err),
     });
 }
 
@@ -83,9 +96,13 @@ snake.Run = () => {
     const getKeyByValue = (obj, val) =>
         Object.keys(obj).find(key => obj[key] === val);
 
-    const currentState = MapTheCells();
+    let currentState = MapTheCells();
+    // Normalize the data
+    currentState = currentState.map(cell => cell / STATES_MAX);
+
     const result = nn.run(currentState);
-    const resultMove = Math.round(result.move);
+    const resultMove = Math.round(result.move * MOVES_MAX);
+    console.log(resultMove);
 
     return getKeyByValue(AVAILABLE_MOVES, resultMove);
 }
