@@ -8,7 +8,8 @@ const AVAILABLE_MOVES = {
 const AVAILABLE_STATES = {
     empty: 0,
     food: 1,
-    snake: 2,
+    snakeHead: 2,
+    snakeBody: 3,
 }
 
 const MOVES_MAX = Math.max(...Object.keys(AVAILABLE_MOVES).map((k, v) => v));
@@ -36,19 +37,19 @@ function DefaultTrain() {
     ];
 
     // add snake in center and food in top 
-    steps[0].input[TOTAL_CELL_COUNT / 2] = AVAILABLE_STATES.snake;
+    steps[0].input[TOTAL_CELL_COUNT / 2] = AVAILABLE_STATES.snakeHead;
     steps[0].input[TOTAL_CELL_COUNT / 2 - CELLS_WIDTH] = AVAILABLE_STATES.food;
 
     // add snake in center and food in bottom
-    steps[1].input[TOTAL_CELL_COUNT / 2] = AVAILABLE_STATES.snake;
+    steps[1].input[TOTAL_CELL_COUNT / 2] = AVAILABLE_STATES.snakeHead;
     steps[1].input[TOTAL_CELL_COUNT / 2 + CELLS_WIDTH] = AVAILABLE_STATES.food;
 
     // add snake in center and food in left
-    steps[2].input[TOTAL_CELL_COUNT / 2] = AVAILABLE_STATES.snake;
+    steps[2].input[TOTAL_CELL_COUNT / 2] = AVAILABLE_STATES.snakeHead;
     steps[2].input[TOTAL_CELL_COUNT / 2 - 1] = AVAILABLE_STATES.food;
 
     // add snake in center and food in right
-    steps[3].input[TOTAL_CELL_COUNT / 2] = AVAILABLE_STATES.snake;
+    steps[3].input[TOTAL_CELL_COUNT / 2] = AVAILABLE_STATES.snakeHead;
     steps[3].input[TOTAL_CELL_COUNT / 2 + 1] = AVAILABLE_STATES.food;
 
     return steps;
@@ -56,13 +57,15 @@ function DefaultTrain() {
 
 function MapTheCells() {
     const isFood = (x, y) => food.x === x && food.y === y;
-    const isSnake = (x, y) => snake.body.some(part => part.x === x && part.y === y);
+    const isSnakeHead = (x, y) => snake.body[0].x === x && snake.body[0].y === y;
+    const isSnakeBody = (x, y) => snake.body.slice(1).some(part => part.x === x && part.y === y);
 
     let cells = [];
     for (let i = 0; i < GAME_WIDTH; i += SQUARE_SIZE) {
         for (let j = 0; j < GAME_HEIGHT; j += SQUARE_SIZE) {
             if (isFood(i, j)) cells.push(AVAILABLE_STATES.food);
-            else if (isSnake(i, j)) cells.push(AVAILABLE_STATES.snake);
+            else if (isSnakeHead(i, j)) cells.push(AVAILABLE_STATES.snakeHead);
+            else if (isSnakeBody(i, j)) cells.push(AVAILABLE_STATES.snakeBody);
             else cells.push(AVAILABLE_STATES.empty);
         }
     }
