@@ -1,10 +1,6 @@
 const SQUARE_SIZE = 20;
 const GAME_WIDTH = 400;
 const GAME_HEIGHT = 400;
-const AVAILABLE_STATES = {
-    training: 0,
-    trained: 1,
-}
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -75,9 +71,8 @@ function drawGame() {
 }
 
 // Move snake
-function moveSnake() {
-    if (gameState === AVAILABLE_STATES.trained)
-        snake.nextMove = snake.Run();
+function moveSnake(isHuman) {
+    if (!isHuman) snake.nextMove = snake.Run();
 
     let head = snake.body[0];
     let newHead = {
@@ -160,11 +155,14 @@ function handleKeyDown(e) {
 }
 
 // Main game loop
-function main() {
-    if (gameState === AVAILABLE_STATES.training)
+function main(trainFunc) {
+    const isHuman = trainFunc !== undefined;
+    if (isHuman)
         humanTrainSteps.push(CurrentTrainState());
 
     if (isGameOver()) {
+        if (isHuman) trainFunc();
+
         drawGameOver();
         return;
     }
@@ -174,42 +172,58 @@ function main() {
         game.speed -= 1;
         generateFood();
     }
-    moveSnake();
+    moveSnake(isHuman);
     drawGame();
-    setTimeout(main, game.speed);
+    setTimeout(() => main(trainFunc), game.speed);
 }
 
 // Start game
-function startGame() {
+function startGame(trainFunc) {
     snake.body = [
         { x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2 },
     ];
-    gameState = AVAILABLE_STATES.training;
-    humanTrainSteps = [];
+    game = {
+        score: 0,
+        speed: 100,
+    };
+
+    const isHuman = trainFunc !== undefined;
+    if (isHuman) humanTrainSteps = [];
 
     generateFood();
-    main();
+    main(trainFunc);
 }
 
 function train() {
-    console.log('Training...');
-    snake.Train(humanTrainSteps);
-    console.log('Training completed');
-    gameState = AVAILABLE_STATES.trained;
+    const trainFunc = () => {
+        console.log('Training...');
+        snake.Train(humanTrainSteps);
+        console.log('Training completed');
+    }
+
+    console.log('Playing...');
+    startGame(trainFunc);
+}
+
+function playTrained() {
+    if (!nnIsTrained()) {
+        alert('Please train first');
+        return;
+    }
+    console.log('Bot playing...');
+    startGame();
 }
 
 function defaultTrain() {
     console.log('Training...');
     snake.Train(DefaultTrain());
     console.log('Training completed');
-    gameState = AVAILABLE_STATES.trained;
 }
 
-let humanTrainSteps = [];
-let gameState = AVAILABLE_STATES.training;
+var humanTrainSteps = [];
 
 // Add event listener
 document.addEventListener('keydown', handleKeyDown);
-document.getElementById('start').addEventListener('click', startGame);
 document.getElementById('train').addEventListener('click', train);
+document.getElementById('playTrained').addEventListener('click', playTrained);
 document.getElementById('defaultTrain').addEventListener('click', defaultTrain);
