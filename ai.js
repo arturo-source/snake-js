@@ -1,73 +1,66 @@
 const AVAILABLE_MOVES = ['up', 'down', 'left', 'right'];
-const AVAILABLE_STATES = {
-    empty: 0,
-    food: 1,
-    snakeHead: 2,
-    snakeBody: 3,
-}
-
-const STATES_MAX = Math.max(...Object.keys(AVAILABLE_STATES).map((k, v) => v));
 
 var nn = new brain.NeuralNetwork({ hiddenLayers: [] });
 const nnIsTrained = () => nn.outputLayer !== -1;
 
 function DefaultTrain() {
-    const TOTAL_CELL_COUNT = (GAME_WIDTH / SQUARE_SIZE) * (GAME_HEIGHT / SQUARE_SIZE);
-    const CELLS_WIDTH = GAME_WIDTH / SQUARE_SIZE;
-
-    let emptyCells = [];
-    for (let i = 0; i < GAME_WIDTH; i += SQUARE_SIZE) {
-        for (let j = 0; j < GAME_HEIGHT; j += SQUARE_SIZE) {
-            emptyCells.push(AVAILABLE_STATES.empty);
-        }
-    }
+    const emptyState = Array(22).fill(0);
 
     let steps = [
-        { input: emptyCells.slice(), output: { up: 1, down: 0, left: 0, right: 0 } },
-        { input: emptyCells.slice(), output: { up: 0, down: 1, left: 0, right: 0 } },
-        { input: emptyCells.slice(), output: { up: 0, down: 0, left: 1, right: 0 } },
-        { input: emptyCells.slice(), output: { up: 0, down: 0, left: 0, right: 1 } }
+        { input: emptyState.slice(), output: { up: 1, down: 0, left: 0, right: 0 } },
+        { input: emptyState.slice(), output: { up: 0, down: 1, left: 0, right: 0 } },
+        { input: emptyState.slice(), output: { up: 0, down: 0, left: 1, right: 0 } },
+        { input: emptyState.slice(), output: { up: 0, down: 0, left: 0, right: 1 } }
     ];
 
     // add snake in center and food in top 
-    steps[0].input[TOTAL_CELL_COUNT / 2] = AVAILABLE_STATES.snakeHead;
-    steps[0].input[TOTAL_CELL_COUNT / 2 - CELLS_WIDTH] = AVAILABLE_STATES.food;
+    steps[0].input[0] = GAME_WIDTH / 2;
+    steps[0].input[1] = GAME_HEIGHT / 2;
+    steps[0].input[20] = GAME_WIDTH / 2;
+    steps[0].input[21] = GAME_HEIGHT / 2 - SQUARE_SIZE;
 
     // add snake in center and food in bottom
-    steps[1].input[TOTAL_CELL_COUNT / 2] = AVAILABLE_STATES.snakeHead;
-    steps[1].input[TOTAL_CELL_COUNT / 2 + CELLS_WIDTH] = AVAILABLE_STATES.food;
+    steps[1].input[0] = GAME_WIDTH / 2;
+    steps[1].input[1] = GAME_HEIGHT / 2;
+    steps[1].input[20] = GAME_WIDTH / 2;
+    steps[1].input[21] = GAME_HEIGHT / 2 + SQUARE_SIZE;
 
     // add snake in center and food in left
-    steps[2].input[TOTAL_CELL_COUNT / 2] = AVAILABLE_STATES.snakeHead;
-    steps[2].input[TOTAL_CELL_COUNT / 2 - 1] = AVAILABLE_STATES.food;
+    steps[2].input[0] = GAME_WIDTH / 2;
+    steps[2].input[1] = GAME_HEIGHT / 2;
+    steps[2].input[20] = GAME_WIDTH / 2 - SQUARE_SIZE;
+    steps[2].input[21] = GAME_HEIGHT / 2;
 
     // add snake in center and food in right
-    steps[3].input[TOTAL_CELL_COUNT / 2] = AVAILABLE_STATES.snakeHead;
-    steps[3].input[TOTAL_CELL_COUNT / 2 + 1] = AVAILABLE_STATES.food;
+    steps[3].input[0] = GAME_WIDTH / 2;
+    steps[3].input[1] = GAME_HEIGHT / 2;
+    steps[3].input[20] = GAME_WIDTH / 2 + SQUARE_SIZE;
+    steps[3].input[21] = GAME_HEIGHT / 2;
 
     return steps;
 }
 
-function MapTheCells() {
-    const isFood = (x, y) => food.x === x && food.y === y;
-    const isSnakeHead = (x, y) => snake.body[0].x === x && snake.body[0].y === y;
-    const isSnakeBody = (x, y) => snake.body.slice(1).some(part => part.x === x && part.y === y);
+function CurrentGameState() {
+    const state = Array(20).fill(0);
+    for (const i in snake.body) {
+        if (i >= state.length / 2) break;
 
-    let cells = [];
-    for (let i = 0; i < GAME_WIDTH; i += SQUARE_SIZE) {
-        for (let j = 0; j < GAME_HEIGHT; j += SQUARE_SIZE) {
-            if (isFood(i, j)) cells.push(AVAILABLE_STATES.food);
-            else if (isSnakeHead(i, j)) cells.push(AVAILABLE_STATES.snakeHead);
-            else if (isSnakeBody(i, j)) cells.push(AVAILABLE_STATES.snakeBody);
-            else cells.push(AVAILABLE_STATES.empty);
-        }
+        state[i * 2] = snake.body[i].x;
+        state[i * 2 + 1] = snake.body[i].y;
+
+        // Invalidate position 0
+        state[i * 2] += SQUARE_SIZE;
+        state[i * 2 + 1] += SQUARE_SIZE;
     }
 
-    return cells;
+    state.push(food.x);
+    state.push(food.y);
+
+    return state;
 }
 
 function CurrentTrainState() {
-    const cells = MapTheCells();
+    const cells = CurrentGameState();
     const output = { up: 0, down: 0, left: 0, right: 0 };
     AVAILABLE_MOVES.forEach(move => {
         if (move === snake.nextMove) output[move] = 1;
@@ -80,7 +73,7 @@ function CurrentTrainState() {
 snake.Train = (steps) => {
     // Normalize the data
     steps = steps.map(step => {
-        step.input = step.input.map(cell => cell / STATES_MAX);
+        step.input = step.input.map(cell => cell / GAME_WIDTH);
         return step;
     });
 
@@ -95,9 +88,9 @@ snake.Run = () => {
     const getKeyFromBiggest = (obj) =>
         Object.keys(obj).reduce((a, b) => obj[a] > obj[b] ? a : b);
 
-    let currentState = MapTheCells();
+    let currentState = CurrentGameState();
     // Normalize the data
-    currentState = currentState.map(cell => cell / STATES_MAX);
+    currentState = currentState.map(cell => cell / GAME_WIDTH);
 
     const result = nn.run(currentState);
     console.log(result);
