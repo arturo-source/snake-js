@@ -4,6 +4,7 @@ var nn = new brain.NeuralNetwork({ hiddenLayers: [] });
 const nnIsTrained = () => nn.outputLayer !== -1;
 
 function DefaultTrain() {
+    const TOTAL_CELLS = GAME_HEIGHT / SQUARE_SIZE * GAME_WIDTH / SQUARE_SIZE;
     const emptyState = Array(2).fill(0);
 
     let steps = [
@@ -14,34 +15,29 @@ function DefaultTrain() {
     ];
 
     // add snake in center and food in top 
-    steps[0].input[0] = GAME_WIDTH / 2;
-    steps[0].input[1] = GAME_HEIGHT / 2;
-    steps[0].input[2] = GAME_WIDTH / 2;
-    steps[0].input[3] = GAME_HEIGHT / 2 - SQUARE_SIZE;
+    steps[0].input[0] = 0;
+    steps[0].input[1] = -SQUARE_SIZE;
 
     // add snake in center and food in bottom
-    steps[1].input[0] = GAME_WIDTH / 2;
-    steps[1].input[1] = GAME_HEIGHT / 2;
-    steps[1].input[2] = GAME_WIDTH / 2;
-    steps[1].input[3] = GAME_HEIGHT / 2 + SQUARE_SIZE;
+    steps[1].input[0] = 0;
+    steps[1].input[1] = SQUARE_SIZE;
 
     // add snake in center and food in left
-    steps[2].input[0] = GAME_WIDTH / 2;
-    steps[2].input[1] = GAME_HEIGHT / 2;
-    steps[2].input[2] = GAME_WIDTH / 2 - SQUARE_SIZE;
-    steps[2].input[3] = GAME_HEIGHT / 2;
+    steps[2].input[0] = -SQUARE_SIZE;
+    steps[2].input[1] = 0;
 
     // add snake in center and food in right
-    steps[3].input[0] = GAME_WIDTH / 2;
-    steps[3].input[1] = GAME_HEIGHT / 2;
-    steps[3].input[2] = GAME_WIDTH / 2 + SQUARE_SIZE;
-    steps[3].input[3] = GAME_HEIGHT / 2;
+    steps[3].input[0] = SQUARE_SIZE;
+    steps[3].input[1] = 0;
 
     return steps;
 }
 
 function CurrentGameState() {
-    return [snake.body[0].x, snake.body[0].y, food.x, food.y];
+    const diffX = food.x - snake.body[0].x;
+    const diffY = food.y - snake.body[0].y;
+
+    return [diffX, diffY];
 }
 
 function CurrentTrainState() {
@@ -63,7 +59,7 @@ snake.Train = (steps) => {
     });
 
     nn.train(steps, {
-        // iterations: 1000,
+        iterations: 100000,
         // errorThresh: 0.0001,
         log: err => console.log(err),
     });
