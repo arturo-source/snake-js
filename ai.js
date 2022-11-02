@@ -4,7 +4,8 @@ var nn = new brain.NeuralNetwork({ hiddenLayers: [] });
 const nnIsTrained = () => nn.outputLayer !== -1;
 
 function DefaultTrain() {
-    const emptyState = Array(22).fill(0);
+    const TOTAL_CELLS = GAME_HEIGHT / SQUARE_SIZE * GAME_WIDTH / SQUARE_SIZE;
+    const emptyState = Array(TOTAL_CELLS * 2).fill(0);
 
     let steps = [
         { input: emptyState.slice(), output: { up: 1, down: 0, left: 0, right: 0 } },
@@ -16,41 +17,37 @@ function DefaultTrain() {
     // add snake in center and food in top 
     steps[0].input[0] = GAME_WIDTH / 2;
     steps[0].input[1] = GAME_HEIGHT / 2;
-    steps[0].input[20] = GAME_WIDTH / 2;
-    steps[0].input[21] = GAME_HEIGHT / 2 - SQUARE_SIZE;
+    steps[0].input.push(GAME_WIDTH / 2);
+    steps[0].input.push(GAME_HEIGHT / 2 - SQUARE_SIZE);
 
     // add snake in center and food in bottom
     steps[1].input[0] = GAME_WIDTH / 2;
     steps[1].input[1] = GAME_HEIGHT / 2;
-    steps[1].input[20] = GAME_WIDTH / 2;
-    steps[1].input[21] = GAME_HEIGHT / 2 + SQUARE_SIZE;
+    steps[1].input.push(GAME_WIDTH / 2);
+    steps[1].input.push(GAME_HEIGHT / 2 + SQUARE_SIZE);
 
     // add snake in center and food in left
     steps[2].input[0] = GAME_WIDTH / 2;
     steps[2].input[1] = GAME_HEIGHT / 2;
-    steps[2].input[20] = GAME_WIDTH / 2 - SQUARE_SIZE;
-    steps[2].input[21] = GAME_HEIGHT / 2;
+    steps[2].input.push(GAME_WIDTH / 2 - SQUARE_SIZE);
+    steps[2].input.push(GAME_HEIGHT / 2);
 
     // add snake in center and food in right
     steps[3].input[0] = GAME_WIDTH / 2;
     steps[3].input[1] = GAME_HEIGHT / 2;
-    steps[3].input[20] = GAME_WIDTH / 2 + SQUARE_SIZE;
-    steps[3].input[21] = GAME_HEIGHT / 2;
+    steps[3].input.push(GAME_WIDTH / 2 + SQUARE_SIZE);
+    steps[3].input.push(GAME_HEIGHT / 2);
 
     return steps;
 }
 
 function CurrentGameState() {
-    const state = Array(20).fill(0);
+    const TOTAL_CELLS = GAME_HEIGHT / SQUARE_SIZE * GAME_WIDTH / SQUARE_SIZE;
+    const state = Array(TOTAL_CELLS * 2).fill(0);
     for (const i in snake.body) {
-        if (i >= state.length / 2) break;
-
-        state[i * 2] = snake.body[i].x;
-        state[i * 2 + 1] = snake.body[i].y;
-
-        // Invalidate position 0
-        state[i * 2] += SQUARE_SIZE;
-        state[i * 2 + 1] += SQUARE_SIZE;
+        const part = snake.body[i];
+        state[i * 2] = part.x;
+        state[i * 2 + 1] = part.y;
     }
 
     state.push(food.x);
