@@ -1,10 +1,4 @@
-const AVAILABLE_MOVES = {
-    up: 0,
-    down: 1,
-    left: 2,
-    right: 3,
-}
-
+const AVAILABLE_MOVES = ['up', 'down', 'left', 'right'];
 const AVAILABLE_STATES = {
     empty: 0,
     food: 1,
@@ -12,7 +6,6 @@ const AVAILABLE_STATES = {
     snakeBody: 3,
 }
 
-const MOVES_MAX = Math.max(...Object.keys(AVAILABLE_MOVES).map((k, v) => v));
 const STATES_MAX = Math.max(...Object.keys(AVAILABLE_STATES).map((k, v) => v));
 
 var nn = new brain.NeuralNetwork({ hiddenLayers: [] });
@@ -30,10 +23,10 @@ function DefaultTrain() {
     }
 
     let steps = [
-        { input: emptyCells.slice(), output: { move: AVAILABLE_MOVES.up } },
-        { input: emptyCells.slice(), output: { move: AVAILABLE_MOVES.down } },
-        { input: emptyCells.slice(), output: { move: AVAILABLE_MOVES.left } },
-        { input: emptyCells.slice(), output: { move: AVAILABLE_MOVES.right } }
+        { input: emptyCells.slice(), output: { up: 1, down: 0, left: 0, right: 0 } },
+        { input: emptyCells.slice(), output: { up: 0, down: 1, left: 0, right: 0 } },
+        { input: emptyCells.slice(), output: { up: 0, down: 0, left: 1, right: 0 } },
+        { input: emptyCells.slice(), output: { up: 0, down: 0, left: 0, right: 1 } }
     ];
 
     // add snake in center and food in top 
@@ -75,8 +68,12 @@ function MapTheCells() {
 
 function CurrentTrainState() {
     const cells = MapTheCells();
+    const output = { up: 0, down: 0, left: 0, right: 0 };
+    AVAILABLE_MOVES.forEach(move => {
+        if (move === snake.nextMove) output[move] = 1;
+    });
 
-    return { input: cells, output: { move: AVAILABLE_MOVES[snake.nextMove] } };
+    return { input: cells, output: output };
 }
 
 
@@ -84,28 +81,26 @@ snake.Train = (steps) => {
     // Normalize the data
     steps = steps.map(step => {
         step.input = step.input.map(cell => cell / STATES_MAX);
-        step.output.move /= MOVES_MAX;
         return step;
     });
 
     nn.train(steps, {
         // iterations: 1000,
-        // errorThresh: 0.01,
+        // errorThresh: 0.0001,
         log: err => console.log(err),
     });
 }
 
 snake.Run = () => {
-    const getKeyByValue = (obj, val) =>
-        Object.keys(obj).find(key => obj[key] === val);
+    const getKeyFromBiggest = (obj) =>
+        Object.keys(obj).reduce((a, b) => obj[a] > obj[b] ? a : b);
 
     let currentState = MapTheCells();
     // Normalize the data
     currentState = currentState.map(cell => cell / STATES_MAX);
 
     const result = nn.run(currentState);
-    const resultMove = Math.round(result.move * MOVES_MAX);
-    console.log(resultMove);
+    console.log(result);
 
-    return getKeyByValue(AVAILABLE_MOVES, resultMove);
+    return getKeyFromBiggest(result);
 }
