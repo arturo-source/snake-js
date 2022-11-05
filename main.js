@@ -71,8 +71,8 @@ function drawGame() {
 }
 
 // Move snake
-function moveSnake(isHuman) {
-    if (!isHuman) snake.nextMove = snake.Run();
+function moveSnake() {
+    snake.nextMove = snake.Run();
 
     let head = snake.body[0];
     let newHead = {
@@ -154,15 +154,62 @@ function handleKeyDown(e) {
     }
 }
 
+// Generate random snake state
+function randomSnakeState() {
+    let newSnake = {
+        body: [],
+        nextMove: '',
+    };
+
+    // Add head
+    newSnake.body.push({
+        x: Math.floor(Math.random() * (GAME_WIDTH / SQUARE_SIZE)) * SQUARE_SIZE,
+        y: Math.floor(Math.random() * (GAME_HEIGHT / SQUARE_SIZE)) * SQUARE_SIZE,
+    });
+
+    // Continue adding body
+    const randomContinuedBody = (head) => {
+        let newHead = {
+            x: head.x,
+            y: head.y,
+        };
+        while (newSnake.body.some((part) => part.x === newHead.x && part.y === newHead.y)) {
+            newHead = {
+                x: head.x,
+                y: head.y,
+            };
+            switch (Math.floor(Math.random() * 4)) {
+                case 0:
+                    newHead.x += SQUARE_SIZE;
+                    break;
+                case 1:
+                    newHead.x -= SQUARE_SIZE;
+                    break;
+                case 2:
+                    newHead.y -= SQUARE_SIZE;
+                    break;
+                case 3:
+                    newHead.y += SQUARE_SIZE;
+                    break;
+            }
+        }
+
+        return newHead;
+    }
+
+    const bodyLength = Math.floor(Math.random() * 10);
+    for (let i = 0; i < bodyLength; i++) {
+        const head = newSnake.body[0];
+        let newHead = randomContinuedBody(head);
+        newSnake.body.unshift(newHead);
+    }
+
+    return newSnake;
+}
+
 // Main game loop
-function main(trainFunc) {
-    const isHuman = trainFunc !== undefined;
-    if (isHuman)
-        humanTrainSteps.push(CurrentTrainState());
-
+function main() {
     if (isGameOver()) {
-        if (isHuman) trainFunc();
-
         drawGameOver();
         return;
     }
@@ -172,13 +219,13 @@ function main(trainFunc) {
         game.speed -= 1;
         generateFood();
     }
-    moveSnake(isHuman);
+    moveSnake();
     drawGame();
-    setTimeout(() => main(trainFunc), game.speed);
+    setTimeout(main, game.speed);
 }
 
 // Start game
-function startGame(trainFunc) {
+function startGame() {
     snake.body = [
         { x: GAME_WIDTH / 2, y: GAME_HEIGHT / 2 },
     ];
@@ -187,22 +234,8 @@ function startGame(trainFunc) {
         speed: 100,
     };
 
-    const isHuman = trainFunc !== undefined;
-    if (isHuman) humanTrainSteps = [];
-
     generateFood();
-    main(trainFunc);
-}
-
-function train() {
-    const trainFunc = () => {
-        console.log('Training...');
-        snake.Train(humanTrainSteps);
-        console.log('Training completed');
-    }
-
-    console.log('Playing...');
-    startGame(trainFunc);
+    main();
 }
 
 function playTrained() {
@@ -214,13 +247,32 @@ function playTrained() {
     startGame();
 }
 
+function train() {
+    let steps = 0;
+    let humanTrainSteps = [];
+    const humanDecision = (e) => {
+        if(steps > 20) {
+            snake.Train(humanTrainSteps);
+            return;
+        }
+        console.log('Human training...' + steps);
+        steps++;
+
+        humanTrainSteps.push(CurrentTrainState());
+        
+        snake = randomSnakeState();
+        generateFood();
+        drawGame();
+    };
+
+    document.addEventListener('keydown', humanDecision);    
+}
+
 function defaultTrain() {
     console.log('Training...');
     snake.Train(DefaultTrain());
     console.log('Training completed');
 }
-
-var humanTrainSteps = [];
 
 // Add event listener
 document.addEventListener('keydown', handleKeyDown);
