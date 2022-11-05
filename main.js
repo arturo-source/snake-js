@@ -128,44 +128,30 @@ function generateFood() {
     food.y = Math.floor(Math.random() * (GAME_HEIGHT / SQUARE_SIZE)) * SQUARE_SIZE;
 }
 
-// Handle key down
-function handleKeyDown(e) {
-    switch (e.key) {
-        case 'ArrowLeft':
-            if (snake.nextMove !== 'right') {
-                snake.nextMove = 'left';
-            }
-            break;
-        case 'ArrowUp':
-            if (snake.nextMove !== 'down') {
-                snake.nextMove = 'up';
-            }
-            break;
-        case 'ArrowRight':
-            if (snake.nextMove !== 'left') {
-                snake.nextMove = 'right';
-            }
-            break;
-        case 'ArrowDown':
-            if (snake.nextMove !== 'up') {
-                snake.nextMove = 'down';
-            }
-            break;
-    }
+// Handle direction press
+function directionPressed(e) {
+    const ARROW_TO_DIRECTION = {
+        ArrowLeft: 'left',
+        ArrowUp: 'up',
+        ArrowRight: 'right',
+        ArrowDown: 'down',
+    };
+
+    return ARROW_TO_DIRECTION[e.key];
 }
 
 // Generate random snake state
 function randomSnakeState() {
-    let newSnake = {
-        body: [],
-        nextMove: '',
-    };
+    let newSnakeBody = [];
 
     // Add head
-    newSnake.body.push({
+    newSnakeBody.push({
         x: Math.floor(Math.random() * (GAME_WIDTH / SQUARE_SIZE)) * SQUARE_SIZE,
         y: Math.floor(Math.random() * (GAME_HEIGHT / SQUARE_SIZE)) * SQUARE_SIZE,
     });
+
+    const partIsOutOfLimits = (part) => part.x < 0 || part.x >= GAME_WIDTH || part.y < 0 || part.y >= GAME_HEIGHT;
+    const partIsInsideSnake = (newPart) => newSnakeBody.some((part) => part.x === newPart.x && part.y === newPart.y);
 
     // Continue adding body
     const randomContinuedBody = (head) => {
@@ -173,7 +159,7 @@ function randomSnakeState() {
             x: head.x,
             y: head.y,
         };
-        while (newSnake.body.some((part) => part.x === newHead.x && part.y === newHead.y)) {
+        while (partIsInsideSnake(newHead) || partIsOutOfLimits(newHead)) {
             newHead = {
                 x: head.x,
                 y: head.y,
@@ -199,12 +185,12 @@ function randomSnakeState() {
 
     const bodyLength = Math.floor(Math.random() * 10);
     for (let i = 0; i < bodyLength; i++) {
-        const head = newSnake.body[0];
-        let newHead = randomContinuedBody(head);
-        newSnake.body.unshift(newHead);
+        const head = newSnakeBody[0];
+        const newHead = randomContinuedBody(head);
+        newSnakeBody.unshift(newHead);
     }
 
-    return newSnake;
+    return newSnakeBody;
 }
 
 // Main game loop
@@ -250,22 +236,28 @@ function playTrained() {
 function train() {
     let steps = 0;
     let humanTrainSteps = [];
+
+    const newRandomGameState = () => {
+        snake.body = randomSnakeState();
+        generateFood();
+        drawGame();
+    }
+
     const humanDecision = (e) => {
-        if(steps > 20) {
+        if (steps > 100) {
             snake.Train(humanTrainSteps);
             return;
         }
-        console.log('Human training...' + steps);
         steps++;
 
+        snake.nextMove = directionPressed(e);
         humanTrainSteps.push(CurrentTrainState());
-        
-        snake = randomSnakeState();
-        generateFood();
-        drawGame();
+
+        newRandomGameState();
     };
 
-    document.addEventListener('keydown', humanDecision);    
+    document.addEventListener('keydown', humanDecision);
+    newRandomGameState();
 }
 
 function defaultTrain() {
@@ -275,7 +267,6 @@ function defaultTrain() {
 }
 
 // Add event listener
-document.addEventListener('keydown', handleKeyDown);
 document.getElementById('train').addEventListener('click', train);
 document.getElementById('playTrained').addEventListener('click', playTrained);
 document.getElementById('defaultTrain').addEventListener('click', defaultTrain);
