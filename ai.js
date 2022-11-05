@@ -73,10 +73,13 @@ snake.Train = (steps) => {
 snake.Run = () => {
     const getKeyFromBiggest = (obj) =>
         Object.keys(obj).reduce((a, b) => obj[a] > obj[b] ? a : b);
+    const thereIsValidMove = (obj) => Object.values(obj).some(value => value > 0.5)
 
     const currentState = CurrentGameState();
     const result = nn.run(currentState);
     console.log(result);
 
-    return getKeyFromBiggest(result);
+    if (thereIsValidMove(result)) {
+        return getKeyFromBiggest(result);
+    }
 }

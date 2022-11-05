@@ -72,7 +72,9 @@ function drawGame() {
 
 // Move snake
 function moveSnake() {
-    snake.nextMove = snake.Run();
+    const nextMove = snake.Run();
+    if (nextMove !== undefined)
+        snake.nextMove = nextMove;
 
     let head = snake.body[0];
     let newHead = {
@@ -244,8 +246,9 @@ function train() {
     }
 
     const humanDecision = (e) => {
-        if (steps > 100) {
+        if (steps > 50) {
             snake.Train(humanTrainSteps);
+            document.removeEventListener('keydown', humanDecision);
             return;
         }
         steps++;
