@@ -1,6 +1,6 @@
 const SQUARE_SIZE = 20;
-const GAME_WIDTH = 400;
-const GAME_HEIGHT = 400;
+const GAME_WIDTH = 800;
+const GAME_HEIGHT = 800;
 
 const canvas = document.getElementById('game');
 const ctx = canvas.getContext('2d');
@@ -246,7 +246,7 @@ function train() {
     }
 
     const humanDecision = (e) => {
-        if (steps > 50) {
+        if (steps > 100) {
             snake.Train(humanTrainSteps);
             document.removeEventListener('keydown', humanDecision);
             return;
