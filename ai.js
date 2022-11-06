@@ -4,7 +4,6 @@ var nn = new brain.NeuralNetwork({ hiddenLayers: [] });
 const nnIsTrained = () => nn.outputLayer !== -1;
 
 function DefaultTrain() {
-    const TOTAL_CELLS = GAME_HEIGHT / SQUARE_SIZE * GAME_WIDTH / SQUARE_SIZE;
     const emptyState = {
         diffX: 0,
         diffY: 0,
@@ -71,15 +70,30 @@ snake.Train = (steps) => {
 }
 
 snake.Run = () => {
-    const getKeyFromBiggest = (obj) =>
-        Object.keys(obj).reduce((a, b) => obj[a] > obj[b] ? a : b);
-    const thereIsValidMove = (obj) => Object.values(obj).some(value => value > 0.5)
+    const getKeysSortedByValue = (obj) =>
+        Object.keys(obj).sort((a, b) => obj[b] - obj[a]);
+    const isValidMove = (move) => {
+        const head = snake.body[0];
+        switch (move) {
+            case 'right':
+                const nextX = head.x + SQUARE_SIZE;
+                return nextX < GAME_WIDTH && !snake.body.some(part => part.x === nextX && part.y === head.y);
+            case 'left':
+                const prevX = head.x - SQUARE_SIZE;
+                return prevX >= 0 && !snake.body.some(part => part.x === prevX && part.y === head.y);
+            case 'up':
+                const prevY = head.y - SQUARE_SIZE;
+                return prevY >= 0 && !snake.body.some(part => part.x === head.x && part.y === prevY);
+            case 'down':
+                const nextY = head.y + SQUARE_SIZE;
+                return nextY < GAME_HEIGHT && !snake.body.some(part => part.x === head.x && part.y === nextY);
+        }
+    }
 
     const currentState = CurrentGameState();
     const result = nn.run(currentState);
-    console.log(result);
 
-    if (thereIsValidMove(result)) {
-        return getKeyFromBiggest(result);
-    }
+    const sortedMoves = getKeysSortedByValue(result);
+    const nextMove = sortedMoves.find(move => isValidMove(move));
+    return nextMove;
 }
